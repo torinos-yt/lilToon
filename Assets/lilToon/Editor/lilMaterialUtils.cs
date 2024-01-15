@@ -262,7 +262,7 @@ namespace lilToon
                     material.SetInt("_AlphaToMask", 0);
                     break;
             }
-            if(!ismulti) material.renderQueue = renderQueue;
+            /*if(!ismulti)*/ material.renderQueue = renderQueue;
             FixTransparentRenderQueue(material, renderingMode);
             if(rend == RenderingMode.Gem)
             {
