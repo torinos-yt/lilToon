@@ -712,7 +712,7 @@ public class lilToonSetting : ScriptableObject
                     }
                 }
             }
-            else
+            else if(next is not AnimationClip)
             {
                 var so = new SerializedObject(next);
                 var prop = so.GetIterator();
@@ -757,7 +757,7 @@ public class lilToonSetting : ScriptableObject
                 SetupShaderSettingFromMaterial((Material)obj, ref shaderSetting);
             } else if (obj is AnimationClip)
             {
-                SetupShaderSettingFromAnimationClip((AnimationClip)obj, ref shaderSetting);
+                SetupShaderSettingFromAnimationClip((AnimationClip)obj, ref shaderSetting, true);
             }
         });
 
