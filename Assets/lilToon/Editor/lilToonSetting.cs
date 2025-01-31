@@ -839,6 +839,7 @@ public class lilToonSetting : ScriptableObject
 
     internal static void SetShaderSettingBeforeBuild()
     {
+#if !LIL_SKIP_PREPROCESS
         try
         {
             if(!ShouldOptimization()) return;
@@ -851,10 +852,12 @@ public class lilToonSetting : ScriptableObject
             Debug.LogException(e);
             Debug.Log("[lilToon] Optimization failed");
         }
+#endif
     }
 
     internal static void SetShaderSettingAfterBuild()
     {
+#if !LIL_SKIP_PREPROCESS
         try
         {
             if(!File.Exists(lilDirectoryManager.postBuildTempPath)) return;
@@ -883,6 +886,7 @@ public class lilToonSetting : ScriptableObject
             Debug.LogException(e);
             Debug.Log("[lilToon] SetShaderSettingAfterBuild() failed");
         }
+#endif
     }
 
     internal static void SetupShaderSettingFromMaterial(Material material, ref lilToonSetting shaderSetting)
