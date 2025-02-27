@@ -2,19 +2,27 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Networking;
-using System;
 using System.IO;
 using System.Collections;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace lilToon
 {
     public static class lilStartup
     {
+        [MenuItem("Assets/lilToon/MigrateMaterials")]
+        public static async Task MigrateMaterialsfromMenu()
+        {
+            Debug.Log("Migrate lilToon Materials...");
+            await MigrateMaterials();
+            Debug.Log("Complete migrate lilToon Materials!");
+        }
+
         [InitializeOnLoadMethod]
-        public static void lilStartupMethod()
+        public static async Task lilStartupMethod()
         {
             //------------------------------------------------------------------------------------------------------------------------------
             // Variables
@@ -132,7 +140,7 @@ namespace lilToon
             if(lilToonInspector.edSet.currentVersionValue != lilConstants.currentVersionValue)
             {
                 // Migrate Materials
-                MigrateMaterials();
+                await MigrateMaterials();
                 lilToonInspector.edSet.currentVersionValue = lilConstants.currentVersionValue;
                 lilToonInspector.SaveEditorSettingTemp();
 
@@ -186,11 +194,27 @@ namespace lilToon
             }
         }
 
-        private static void MigrateMaterials()
+        static int lilToonVersionID = Shader.PropertyToID("_lilToonVersion");
+
+        private static async Task MigrateMaterials()
         {
+            var count = 0;
             foreach(var material in lilDirectoryManager.FindAssets<Material>("t:material"))
             {
                 MigrateMaterial(material);
+                count++;
+                
+                if(count > 150)
+                {
+                    AssetDatabase.SaveAssets();
+                    var handle = Resources.UnloadUnusedAssets();
+                    while(true)
+                    {
+                        if(handle.isDone) break;
+                        await Task.Delay(10);
+                    }
+                    count = 0;
+                }
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -200,10 +224,10 @@ namespace lilToon
         {
             if(!lilMaterialUtils.CheckShaderIslilToon(material)) return;
             int version = 0;
-            if(material.HasProperty("_lilToonVersion")) version = (int)material.GetFloat("_lilToonVersion");
+            if(material.HasProperty(lilToonVersionID)) version = (int)material.GetFloat(lilToonVersionID);
             if(version >= lilConstants.currentVersionValue) return;
             Debug.Log("[lilToon]Run migration: " + material.name);
-            material.SetFloat("_lilToonVersion", lilConstants.currentVersionValue);
+            material.SetFloat(lilToonVersionID, lilConstants.currentVersionValue);
 
             // 1.2.7 -> 1.2.8
             if(version < 21)
