@@ -140,7 +140,7 @@ namespace lilToon
             if(lilToonInspector.edSet.currentVersionValue != lilConstants.currentVersionValue)
             {
                 // Migrate Materials
-                await MigrateMaterials();
+                // await MigrateMaterials();
                 lilToonInspector.edSet.currentVersionValue = lilConstants.currentVersionValue;
                 lilToonInspector.SaveEditorSettingTemp();
 
