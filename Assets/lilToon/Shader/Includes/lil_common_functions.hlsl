@@ -258,7 +258,8 @@ float lilGetOutlineWidth(float2 uv, float4 color, float outlineWidth, TEXTURE2D(
         outlineWidth *= LIL_SAMPLE_2D_LOD(outlineWidthMask, samp, uv, 0).r;
     #endif
     if(outlineVertexR2Width == 1) outlineWidth *= color.r;
-    if(outlineVertexR2Width == 2) outlineWidth *= color.a;
+    if(outlineVertexR2Width == 2) outlineWidth *= 1 - color.r;
+    if(outlineVertexR2Width == 3) outlineWidth *= color.a;
     return outlineWidth;
 }
 
@@ -284,7 +285,7 @@ void lilCalcOutlinePosition(inout float3 positionOS, float2 uvs[4], float4 color
     #if defined(LIL_FEATURE_OutlineVectorTex)
         outlineN = lilGetOutlineVector(tbnOS, uvs[outlineVectorUVMode], outlineVectorScale, outlineVectorTex LIL_SAMP_IN(samp));
     #endif
-    if(outlineVertexR2Width == 2) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
+    if(outlineVertexR2Width == 3) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
     positionOS += outlineN * width;
     float3 V = lilIsPerspective() ? lilViewDirectionOS(positionOS) : mul((float3x3)LIL_MATRIX_I_M, LIL_MATRIX_V._m20_m21_m22);
     positionOS -= normalize(V) * outlineZBias;
@@ -295,7 +296,7 @@ void lilCalcOutlinePositionLite(inout float3 positionOS, float2 uv, float4 color
     float3 positionWS = lilToAbsolutePositionWS(lilOptMul(LIL_MATRIX_M, positionOS).xyz);
     float width = lilGetOutlineWidth(positionOS, positionWS, uv, color, outlineWidth, outlineWidthMask, outlineVertexR2Width, outlineFixWidth LIL_SAMP_IN(samp));
     float3 outlineN = normalOS;
-    if(outlineVertexR2Width == 2) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
+    if(outlineVertexR2Width == 3) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
     positionOS += outlineN * width;
     float3 V = lilIsPerspective() ? lilViewDirectionOS(positionOS) : mul((float3x3)LIL_MATRIX_I_M, LIL_MATRIX_V._m20_m21_m22);
     positionOS -= normalize(V) * outlineZBias;

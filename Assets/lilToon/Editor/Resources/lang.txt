@@ -220,6 +220,7 @@ sWidth	Mask & Width	マスクと太さ	마스크와 굵기	蒙版 & 宽度	蒙�
 sWidthR	Width (R)	太さ (R)	굵기 (R)	宽度 (R)	寬度 (R)
 sFixWidth	Fix width by distance	距離に応じた太さ補正	거리에 따른 굵기 보정	按距离修正宽度	按距離正確寬度
 sVertexR2Width	R -> Width	R -> Width	R -> Width	R -> Width	R -> Width
+sVertexR2InvWidth	R -> 1 - Width	R -> 1 - Width	R -> 1 - Width	R -> 1 - Width	R -> 1 - Width
 sVertexRGBA2Normal	RGBA -> Normal & Width	RGBA -> Normal & Width	RGBA -> Normal & Width	RGBA -> Normal & Width	RGBA -> Normal & Width
 sDeleteMesh0	Remove zero width vertices	太さ0の頂点を削除	굵기 0의 꼭짓점 삭제	删除宽度为 0 的顶点	刪除寬度0的頂點
 sDisableInVR	Disable in VR	VR時に非表示	VR에서 사용 안 함	在 VR 中禁用	在 VR 中禁用
