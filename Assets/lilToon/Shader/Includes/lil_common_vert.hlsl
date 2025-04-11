@@ -52,6 +52,9 @@ void lilCustomVertexWS(inout appdata input, inout float2 uvMain, inout lilVertex
 // Vertex shader
 LIL_V2F_TYPE vert(appdata input)
 {
+    bool dissolveActive = true;
+    bool dissolveInvert = false;
+    
     LIL_V2F_TYPE LIL_V2F_OUT;
     LIL_INITIALIZE_STRUCT(v2f, LIL_V2F_OUT_BASE);
     #if defined(LIL_ONEPASS_OUTLINE)
@@ -79,7 +82,7 @@ LIL_V2F_TYPE vert(appdata input)
     #endif
 
     #undef LIL_VERTEX_CONDITION
-
+    
     //------------------------------------------------------------------------------------------------------------------------------
     // Single Pass Instanced rendering
     LIL_SETUP_INSTANCE_ID(input);
@@ -203,7 +206,7 @@ LIL_V2F_TYPE vert(appdata input)
         LIL_V2F_OUT_BASE.positionCS     = vertexInput.positionCS;
     #endif
     #if defined(LIL_V2F_POSITION_OS)
-        LIL_V2F_OUT_BASE.positionOS     = input.positionOS.xyz;
+        LIL_V2F_OUT_BASE.positionOSdissolve.xyz = input.positionOS.xyz;
     #endif
     #if defined(LIL_V2F_POSITION_WS)
         LIL_V2F_OUT_BASE.positionWS     = vertexInput.positionWS;
@@ -241,7 +244,7 @@ LIL_V2F_TYPE vert(appdata input)
             }
         #endif
     #endif
-
+    
     //------------------------------------------------------------------------------------------------------------------------------
     // Fog & Lighting
     lilFragData fd = lilInitFragData();
@@ -283,13 +286,13 @@ LIL_V2F_TYPE vert(appdata input)
     #if defined(LIL_V2F_POSITION_CS) && defined(LIL_FEATURE_CLIPPING_CANCELLER) && !defined(LIL_LITE) && !defined(LIL_PASS_SHADOWCASTER_INCLUDED) && !defined(LIL_PASS_META_INCLUDED)
         #if defined(UNITY_REVERSED_Z)
             // DirectX
-            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 LIL_V2F_OUT_BASE.positionCS.z = LIL_V2F_OUT_BASE.positionCS.z * 0.0001 + LIL_V2F_OUT_BASE.positionCS.w * 0.999;
             }
         #else
             // OpenGL
-            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 LIL_V2F_OUT_BASE.positionCS.z = LIL_V2F_OUT_BASE.positionCS.z * 0.0001 - LIL_V2F_OUT_BASE.positionCS.w * 0.999;
             }
@@ -312,13 +315,13 @@ LIL_V2F_TYPE vert(appdata input)
         #if defined(LIL_FEATURE_CLIPPING_CANCELLER) && !defined(LIL_LITE) && !defined(LIL_PASS_SHADOWCASTER_INCLUDED) && !defined(LIL_PASS_META_INCLUDED)
             #if defined(UNITY_REVERSED_Z)
                 // DirectX
-                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
                 {
                     LIL_V2F_OUT.positionCSOL.z = LIL_V2F_OUT.positionCSOL.z * 0.0001 + LIL_V2F_OUT.positionCSOL.w * 0.999;
                 }
             #else
                 // OpenGL
-                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
                 {
                     LIL_V2F_OUT.positionCSOL.z = LIL_V2F_OUT.positionCSOL.z * 0.0001 - LIL_V2F_OUT.positionCSOL.w * 0.999;
                 }
@@ -350,10 +353,10 @@ LIL_V2F_TYPE vert(appdata input)
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Remove Outline
-    #if defined(LIL_ONEPASS_OUTLINE)
+    #if defined(LIL_ONEPASS_OUTLINE) && defined(LIL_PASS_FORWARD_INCLUDED)
         float width = lilGetOutlineWidth(uvMain, input.color, _OutlineWidth, _OutlineWidthMask, _OutlineVertexR2Width LIL_SAMP_IN(lil_sampler_linear_repeat));
         if(width > -0.000001 && width < 0.000001 && _OutlineDeleteMesh) LIL_V2F_OUT.positionCSOL = 0.0/0.0;
-    #elif defined(LIL_OUTLINE)
+    #elif defined(LIL_OUTLINE) && defined(LIL_PASS_FORWARD_INCLUDED)
         float width = lilGetOutlineWidth(uvMain, input.color, _OutlineWidth, _OutlineWidthMask, _OutlineVertexR2Width LIL_SAMP_IN(lil_sampler_linear_repeat));
         if(width > -0.000001 && width < 0.000001 && _OutlineDeleteMesh) LIL_V2F_OUT_BASE.positionCS = 0.0/0.0;
     #endif
@@ -363,6 +366,7 @@ LIL_V2F_TYPE vert(appdata input)
     #if defined(LIL_FEATURE_IDMASK) && !defined(LIL_NOT_SUPPORT_VERTEXID) && !defined(LIL_LITE)
         int idMaskIndices[8] = {_IDMaskIndex1,_IDMaskIndex2,_IDMaskIndex3,_IDMaskIndex4,_IDMaskIndex5,_IDMaskIndex6,_IDMaskIndex7,_IDMaskIndex8};
         float idMaskFlags[8] = {_IDMask1,_IDMask2,_IDMask3,_IDMask4,_IDMask5,_IDMask6,_IDMask7,_IDMask8};
+        float idMaskPriorFlags[8] = {_IDMaskPrior1,_IDMaskPrior2,_IDMaskPrior3,_IDMaskPrior4,_IDMaskPrior5,_IDMaskPrior6,_IDMaskPrior7,_IDMaskPrior8};
         uint idMaskArg = 0;
         switch(_IDMaskFrom)
         {
@@ -392,7 +396,14 @@ LIL_V2F_TYPE vert(appdata input)
             #endif
             default: idMaskArg = input.vertexID; break;
         }
-        bool idMasked = IDMask(idMaskArg,idMaskIndices,idMaskFlags);
+        bool idMasked = IDMask(idMaskArg,_IDMaskIsBitmap,idMaskIndices,idMaskFlags);
+        if(_IDMaskControlsDissolve)
+        {
+            bool priorIdMasked = IDMask(idMaskArg, _IDMaskIsBitmap, idMaskIndices, idMaskPriorFlags);
+            dissolveActive = idMasked != priorIdMasked;
+            dissolveInvert = priorIdMasked;
+            idMasked = idMasked && priorIdMasked;
+        }
         #if defined(LIL_V2F_POSITION_CS)
             LIL_V2F_OUT_BASE.positionCS = idMasked ? 0.0/0.0 : LIL_V2F_OUT_BASE.positionCS;
         #endif
@@ -401,10 +412,28 @@ LIL_V2F_TYPE vert(appdata input)
         #endif
     #endif
 
+    //------------------------------------------------------------------------------------------------------------------------------
+    // UDIM Discard
+    #if defined(LIL_FEATURE_UDIMDISCARD) && !defined(LIL_LITE)
+    if(_UDIMDiscardMode == 0 && _UDIMDiscardCompile == 1 && LIL_CHECK_UDIMDISCARD(input)) // Discard Vertices instead of just pixels
+    {
+        #if defined(LIL_V2F_POSITION_CS) || defined(LIL_V2F_SHADOW_CASTER_OUTPUT)
+        LIL_V2F_OUT_BASE.positionCS = 0.0/0.0;
+        #endif
+        #if defined(LIL_ONEPASS_OUTLINE)
+        LIL_V2F_OUT.positionCSOL = 0.0/0.0;
+        #endif
+    }
+    #endif
+
+    #if defined(LIL_V2F_POSITION_OS)
+    LIL_V2F_OUT_BASE.positionOSdissolve.w = (dissolveActive | (dissolveInvert << 1));
+    #endif
+    
     #if !defined(SHADER_STAGE_VERTEX) || defined(LIL_CUSTOM_SAFEVERT)
         }
     #endif
-
+    
     return LIL_V2F_OUT;
 }
 

@@ -14,6 +14,10 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
+#if UNITY_2022_1_OR_NEWER || (UNITY_2023_1_OR_NEWER && !UNITY_2023_2_OR_NEWER)
+    using System.Text.RegularExpressions;
+#endif
 
 public class lilToonSetting : ScriptableObject
 {
@@ -30,6 +34,7 @@ public class lilToonSetting : ScriptableObject
     public bool LIL_FEATURE_RECEIVE_SHADOW = true;
     public bool LIL_FEATURE_SHADOW_3RD = true;
     public bool LIL_FEATURE_SHADOW_LUT = true;
+    public bool LIL_FEATURE_RIMSHADE = true;
     public bool LIL_FEATURE_EMISSION_1ST = true;
     public bool LIL_FEATURE_EMISSION_2ND = true;
     public bool LIL_FEATURE_ANIMATE_EMISSION_UV = true;
@@ -54,6 +59,7 @@ public class lilToonSetting : ScriptableObject
     public bool LIL_FEATURE_AUDIOLINK_LOCAL = true;
     public bool LIL_FEATURE_DISSOLVE = true;
     public bool LIL_FEATURE_IDMASK = true;
+    public bool LIL_FEATURE_UDIMDISCARD = true;
     public bool LIL_FEATURE_DITHER = true;
     public bool LIL_FEATURE_ENCRYPTION = false;
     public bool LIL_FEATURE_ANIMATE_OUTLINE_UV = true;
@@ -84,6 +90,7 @@ public class lilToonSetting : ScriptableObject
     public bool LIL_FEATURE_ShadowColorTex = true;
     public bool LIL_FEATURE_Shadow2ndColorTex = true;
     public bool LIL_FEATURE_Shadow3rdColorTex = true;
+    public bool LIL_FEATURE_RimShadeMask = true;
     public bool LIL_FEATURE_BacklightColorTex = true;
     public bool LIL_FEATURE_SmoothnessTex = true;
     public bool LIL_FEATURE_MetallicGlossMap = true;
@@ -127,6 +134,8 @@ public class lilToonSetting : ScriptableObject
     public bool isLocked = false;
     public bool isDebugOptimize = false;
     public bool isOptimizeInTestBuild = false;
+    public bool isOptimizeInNDMF = false;
+    public bool isMigrateInStartUp = true;
 
     public float defaultAsUnlit = 0.0f;
     public float defaultVertexLightStrength = 0.0f;
@@ -147,6 +156,11 @@ public class lilToonSetting : ScriptableObject
     public lilToonPreset presetFace;
     public lilToonPreset presetHair;
     public lilToonPreset presetCloth;
+
+    private static HashSet<string> logs = new HashSet<string>();
+
+    // This is not a shader setting, but the version number is stored here for material migration.
+    public int previousVersion = 0;
 
     // Lock
     internal static void SaveLockedSetting(lilToonSetting shaderSetting)
@@ -169,6 +183,7 @@ public class lilToonSetting : ScriptableObject
             shaderSetting.LIL_OPTIMIZE_USE_LIGHTMAP          = lockedSetting.LIL_OPTIMIZE_USE_LIGHTMAP;
             shaderSetting.isDebugOptimize                    = lockedSetting.isDebugOptimize;
             shaderSetting.isOptimizeInTestBuild              = lockedSetting.isOptimizeInTestBuild;
+            shaderSetting.isMigrateInStartUp                 = lockedSetting.isMigrateInStartUp;
             shaderSetting.mainLightModeName                  = lockedSetting.mainLightModeName;
             shaderSetting.outlineLightModeName               = lockedSetting.outlineLightModeName;
             shaderSetting.preLightModeName                   = lockedSetting.preLightModeName;
@@ -244,6 +259,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_SHADOW_3RD = false;
         shaderSetting.LIL_FEATURE_SHADOW_LUT = false;
         shaderSetting.LIL_FEATURE_RECEIVE_SHADOW = false;
+        shaderSetting.LIL_FEATURE_RIMSHADE = false;
         shaderSetting.LIL_FEATURE_EMISSION_1ST = false;
         shaderSetting.LIL_FEATURE_EMISSION_2ND = false;
         shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_UV = false;
@@ -269,6 +285,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_DISSOLVE = false;
         shaderSetting.LIL_FEATURE_DITHER = false;
         shaderSetting.LIL_FEATURE_IDMASK = false;
+        shaderSetting.LIL_FEATURE_UDIMDISCARD = false;
         shaderSetting.LIL_FEATURE_ENCRYPTION = lilDirectoryManager.ExistsEncryption();
         shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV = false;
         shaderSetting.LIL_FEATURE_OUTLINE_TONE_CORRECTION = false;
@@ -298,6 +315,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_ShadowColorTex = false;
         shaderSetting.LIL_FEATURE_Shadow2ndColorTex = false;
         shaderSetting.LIL_FEATURE_Shadow3rdColorTex = false;
+        shaderSetting.LIL_FEATURE_RimShadeMask = false;
         shaderSetting.LIL_FEATURE_BacklightColorTex = false;
         shaderSetting.LIL_FEATURE_SmoothnessTex = false;
         shaderSetting.LIL_FEATURE_MetallicGlossMap = false;
@@ -352,6 +370,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_SHADOW_3RD = true;
         shaderSetting.LIL_FEATURE_SHADOW_LUT = true;
         shaderSetting.LIL_FEATURE_RECEIVE_SHADOW = true;
+        shaderSetting.LIL_FEATURE_RIMSHADE = true;
         shaderSetting.LIL_FEATURE_EMISSION_1ST = true;
         shaderSetting.LIL_FEATURE_EMISSION_2ND = true;
         shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_UV = true;
@@ -377,6 +396,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_DISSOLVE = true;
         shaderSetting.LIL_FEATURE_DITHER = true;
         shaderSetting.LIL_FEATURE_IDMASK = true;
+        shaderSetting.LIL_FEATURE_UDIMDISCARD = true;
         shaderSetting.LIL_FEATURE_ENCRYPTION = lilDirectoryManager.ExistsEncryption();
         shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV = true;
         shaderSetting.LIL_FEATURE_OUTLINE_TONE_CORRECTION = true;
@@ -409,6 +429,7 @@ public class lilToonSetting : ScriptableObject
             shaderSetting.LIL_FEATURE_ShadowColorTex = true;
             shaderSetting.LIL_FEATURE_Shadow2ndColorTex = true;
             shaderSetting.LIL_FEATURE_Shadow3rdColorTex = true;
+            shaderSetting.LIL_FEATURE_RimShadeMask = true;
             shaderSetting.LIL_FEATURE_BacklightColorTex = true;
             shaderSetting.LIL_FEATURE_SmoothnessTex = true;
             shaderSetting.LIL_FEATURE_MetallicGlossMap = true;
@@ -490,7 +511,8 @@ public class lilToonSetting : ScriptableObject
             if(shaderPath.Contains(".lilcontainer")) continue;
 
             string baseShaderPath = baseShaderFolderPath + Path.AltDirectorySeparatorChar + Path.GetFileNameWithoutExtension(shaderPath) + ".lilinternal";
-            if(File.Exists(baseShaderPath)) File.WriteAllText(shaderPath, lilShaderContainer.UnpackContainer(baseShaderPath, null, doOptimize));
+            if(!File.Exists(baseShaderPath)) continue;
+            File.WriteAllText(shaderPath, lilShaderContainer.UnpackContainer(baseShaderPath, null, doOptimize));
         }
         foreach(var shaderPath in shaderPathes)
         {
@@ -535,6 +557,7 @@ public class lilToonSetting : ScriptableObject
             if(shaderSetting.LIL_FEATURE_SHADOW_3RD) sb.AppendLine("#define LIL_FEATURE_SHADOW_3RD");
             if(shaderSetting.LIL_FEATURE_SHADOW_LUT) sb.AppendLine("#define LIL_FEATURE_SHADOW_LUT");
         }
+        if(shaderSetting.LIL_FEATURE_RIMSHADE) sb.AppendLine("#define LIL_FEATURE_RIMSHADE");
 
         if(shaderSetting.LIL_FEATURE_EMISSION_1ST) sb.AppendLine("#define LIL_FEATURE_EMISSION_1ST");
         if(shaderSetting.LIL_FEATURE_EMISSION_2ND) sb.AppendLine("#define LIL_FEATURE_EMISSION_2ND");
@@ -573,6 +596,7 @@ public class lilToonSetting : ScriptableObject
         if(shaderSetting.LIL_FEATURE_DISSOLVE) sb.AppendLine("#define LIL_FEATURE_DISSOLVE");
         if(shaderSetting.LIL_FEATURE_DITHER) sb.AppendLine("#define LIL_FEATURE_DITHER");
         if(shaderSetting.LIL_FEATURE_IDMASK) sb.AppendLine("#define LIL_FEATURE_IDMASK");
+        if(shaderSetting.LIL_FEATURE_UDIMDISCARD) sb.AppendLine("#define LIL_FEATURE_UDIMDISCARD");
         if(shaderSetting.LIL_FEATURE_ENCRYPTION) sb.AppendLine("#define LIL_FEATURE_ENCRYPTION");
         if(shaderSetting.LIL_FEATURE_OUTLINE_TONE_CORRECTION) sb.AppendLine("#define LIL_FEATURE_OUTLINE_TONE_CORRECTION");
         if(shaderSetting.LIL_FEATURE_OUTLINE_RECEIVE_SHADOW) sb.AppendLine("#define LIL_FEATURE_OUTLINE_RECEIVE_SHADOW");
@@ -602,6 +626,7 @@ public class lilToonSetting : ScriptableObject
         if(shaderSetting.LIL_FEATURE_ShadowColorTex)             sb.AppendLine("#define LIL_FEATURE_ShadowColorTex");
         if(shaderSetting.LIL_FEATURE_Shadow2ndColorTex)          sb.AppendLine("#define LIL_FEATURE_Shadow2ndColorTex");
         if(shaderSetting.LIL_FEATURE_Shadow3rdColorTex)          sb.AppendLine("#define LIL_FEATURE_Shadow3rdColorTex");
+        if(shaderSetting.LIL_FEATURE_RimShadeMask)               sb.AppendLine("#define LIL_FEATURE_RimShadeMask");
         if(shaderSetting.LIL_FEATURE_BacklightColorTex)          sb.AppendLine("#define LIL_FEATURE_BacklightColorTex");
         if(shaderSetting.LIL_FEATURE_SmoothnessTex)              sb.AppendLine("#define LIL_FEATURE_SmoothnessTex");
         if(shaderSetting.LIL_FEATURE_MetallicGlossMap)           sb.AppendLine("#define LIL_FEATURE_MetallicGlossMap");
@@ -672,79 +697,79 @@ public class lilToonSetting : ScriptableObject
         return shaderSettingString;
     }
 
-    internal static void WalkAllSceneReferencedAssets(Action<UnityEngine.Object> callback)
+    internal static void WalkAllSceneReferencedAssets(Action<Object> callback, bool loadBuildScene)
     {
-        var toVisit = new Queue<UnityEngine.Object>();
-        var visited = new HashSet<UnityEngine.Object>();
+        Debug.Log("WalkAllSceneReferencedAssets");
 
-        foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+        var toVisit = new Queue<Object>();
+        var visited = new HashSet<Object>();
+
+        if(loadBuildScene)
         {
-            toVisit.Enqueue(root.transform);
-            visited.Add(root.transform);
+            var startScenePath = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
+            for(int i = -1; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++)
+            {
+                if(i >= 0) UnityEditor.SceneManagement.EditorSceneManager.OpenScene(UnityEngine.SceneManagement.SceneUtility.GetScenePathByBuildIndex(i));
+                WalkAllSceneReferencedAssets(callback, toVisit, visited);
+            }
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(startScenePath);
+        }
+        else
+        {
+            WalkAllSceneReferencedAssets(callback, toVisit, visited);
+        }
+    }
+
+    private static void WalkAllSceneReferencedAssets(Action<Object> callback, Queue<Object> toVisit, HashSet<Object> visited)
+    {
+        void Add(Object o)
+        {
+            if(!o || visited.Contains(o)) return;
+            toVisit.Enqueue(o);
+            visited.Add(o);
         }
 
+        foreach(var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            Add(root.transform);
+
         // use unity reflection to walk all properties in all objects referenced from the scene
-        while (toVisit.Count > 0)
+        while(toVisit.Count > 0)
         {
             var next = toVisit.Dequeue();
-            if (next == null) continue;
-            
+            if(next == null) continue;
+        
             callback.Invoke(next);
 
-            if (next is Transform)
-            {
-                var t = (Transform)next;
-                foreach (Transform child in t)
-                {
-                    if (!visited.Contains(child))
-                    {
-                        toVisit.Enqueue(child);
-                        visited.Add(child);
-                    }
-                }
+            if(
+                next is Mesh ||
+                next is Texture ||
+                next is Shader ||
+                next is TextAsset ||
+                next.GetType() == typeof(Object)
+            ) continue;
 
-                foreach (var c in t.GetComponents(typeof(Component)))
-                {
-                    if (!(c is Transform) && !visited.Contains(c))
-                    {
-                        toVisit.Enqueue(c);
-                        visited.Add(c);
-                    }
-                }
+            if(next is Transform)
+            {
+                var t = next as Transform;
+                foreach(Transform child in t) Add(child);
+
+                foreach(var c in t.GetComponents(typeof(Component)))
+                    if(!(c is Transform)) Add(c);
             }
             else if(next is not AnimationClip)
             {
-                var so = new SerializedObject(next);
-                var prop = so.GetIterator();
-
                 bool enterChildren = true;
-                while (prop.Next(enterChildren))
+                while(prop.Next(enterChildren))
                 {
-                    enterChildren = true;
-
-                    switch (prop.propertyType)
-                    {
-                        case SerializedPropertyType.String:
-                            enterChildren = false;
-                            break;
-                        case SerializedPropertyType.ObjectReference:
-                        {
-                            var obj = prop.objectReferenceValue;
-                            if (obj != null && !visited.Contains(obj))
-                            {
-                                toVisit.Enqueue(obj);
-                                visited.Add(obj);
-                            }
-
-                            break;
-                        }
-                    }
+                    enterChildren = prop.propertyType != SerializedPropertyType.String;
+                    if(prop.propertyType == SerializedPropertyType.ObjectReference)
+                        Add(prop.objectReferenceValue);
                 }
             }
         }
     }
-    
-    internal static void ApplyShaderSettingOptimized(List<Shader> shaders = null)
+
+    internal static void ApplyShaderSettingOptimized(bool loadBuildScene = true, List<Shader> shaders = null)
     {
         lilToonSetting shaderSetting = null;
         InitializeShaderSetting(ref shaderSetting);
@@ -759,7 +784,7 @@ public class lilToonSetting : ScriptableObject
             {
                 SetupShaderSettingFromAnimationClip((AnimationClip)obj, ref shaderSetting, true);
             }
-        });
+        }, loadBuildScene);
 
         // Apply
         ApplyShaderSetting(shaderSetting, "[lilToon] PreprocessBuild", shaders);
@@ -798,15 +823,49 @@ public class lilToonSetting : ScriptableObject
         shaderSettingText = BuildShaderSettingString(shaderSetting, false);
     }
 
+    #if UNITY_2022_1_OR_NEWER || (UNITY_2023_1_OR_NEWER && !UNITY_2023_2_OR_NEWER)
+    private static bool WorkaroundForUsePassBug()
+    {
+        // Normally, there is no problem if you update Unity.
+        // This workaround exists for unusual cases.
+        // https://issuetracker.unity3d.com/issues/crash-on-malloc-internal-when-recompiling-a-shadergraph-used-by-another-shader-via-usepass
+        var regex = new Regex(@"(\d*)\.(\d*)\.(\d*)");
+        var match = regex.Match(Application.unityVersion);
+
+        if(!match.Success) return true;
+        var major = int.Parse(match.Groups[1].Value);
+        var minor = int.Parse(match.Groups[2].Value);
+        var patch = int.Parse(match.Groups[3].Value);
+
+        if(major == 2022 && (minor < 3 || patch < 14)) return true;
+        if(major == 2023 && patch < 20) return true;
+
+        return false;
+    }
+    #endif
+
     internal static void SetShaderSettingBeforeBuild(Material[] materials, AnimationClip[] clips)
     {
+        #if !LILTOON_DISABLE_OPTIMIZATION
+        #if UNITY_2022_1_OR_NEWER || (UNITY_2023_1_OR_NEWER && !UNITY_2023_2_OR_NEWER)
+            if(WorkaroundForUsePassBug()){ Debug.Log("[lilToon] Skip Optimization"); return; }
+        #endif
         try
         {
+            logs.Clear();
+            #if UNITY_2022_1_OR_NEWER
+                var materialParents = new HashSet<Material>();
+                foreach(var m in materials)
+                {
+                    GetMaterialParents(materialParents, m);
+                }
+                materials = materials.Union(materialParents).ToArray();
+            #endif
             if(!ShouldOptimization()) return;
             var shaders = GetShaderListFromGameObject(materials, clips);
             if(shaders.Count() == 0) return;
 
-            File.WriteAllText(lilDirectoryManager.postBuildTempPath, string.Join(",", shaders.Select(s => s.name).Distinct().ToArray()));
+            lilEditorParameters.instance.modifiedShaders = string.Join(",", shaders.Select(s => s.name).Distinct().ToArray());
 
             lilToonSetting shaderSetting = null;
             InitializeShaderSetting(ref shaderSetting);
@@ -829,30 +888,48 @@ public class lilToonSetting : ScriptableObject
             // Apply
             ApplyShaderSetting(shaderSetting, "[lilToon] PreprocessBuild", shaders, true);
             AssetDatabase.Refresh();
+            Debug.Log(string.Join(Environment.NewLine, logs));
         }
         catch(Exception e)
         {
             Debug.LogException(e);
             Debug.Log("[lilToon] SetShaderSettingBeforeBuild() failed");
         }
+        #endif
     }
 
-    internal static void SetShaderSettingBeforeBuild()
+    #if UNITY_2022_1_OR_NEWER
+    private static void GetMaterialParents(HashSet<Material> parents, Material material)
     {
+        if(!material || !material.parent) return;
+        var p = material.parent;
+        parents.Add(p);
+        GetMaterialParents(parents, p);
+    }
+    #endif
+
+    internal static void SetShaderSettingBeforeBuild(bool loadBuildScene = true)
+    {
+        #if !LILTOON_DISABLE_OPTIMIZATION
+        #if UNITY_2022_1_OR_NEWER || (UNITY_2023_1_OR_NEWER && !UNITY_2023_2_OR_NEWER)
+            if(WorkaroundForUsePassBug()){ Debug.Log("[lilToon] Skip Optimization"); return; }
+        #endif
 #if !LIL_SKIP_PREPROCESS
         try
         {
             if(!ShouldOptimization()) return;
+            logs.Clear();
             var shaders = GetShaderListFromProject();
-            File.WriteAllText(lilDirectoryManager.postBuildTempPath, string.Join(",", shaders.Select(s => s.name).Distinct().ToArray()));
-            ApplyShaderSettingOptimized(shaders);
+            lilEditorParameters.instance.modifiedShaders = string.Join(",", shaders.Select(s => s.name).Distinct().ToArray());
+            ApplyShaderSettingOptimized(loadBuildScene, shaders);
+            Debug.Log(string.Join(Environment.NewLine, logs));
         }
         catch(Exception e)
         {
             Debug.LogException(e);
             Debug.Log("[lilToon] Optimization failed");
         }
-#endif
+        #endif
     }
 
     internal static void SetShaderSettingAfterBuild()
@@ -860,17 +937,16 @@ public class lilToonSetting : ScriptableObject
 #if !LIL_SKIP_PREPROCESS
         try
         {
-            if(!File.Exists(lilDirectoryManager.postBuildTempPath)) return;
-            var shaderNames = File.ReadAllText(lilDirectoryManager.postBuildTempPath).Split(',');
-            File.Delete(lilDirectoryManager.postBuildTempPath);
+            if(string.IsNullOrEmpty(lilEditorParameters.instance.modifiedShaders)) return;
+            var shaders = lilEditorParameters.instance.modifiedShaders.Split(',').Select(n => Shader.Find(n)).Where(s => s != null).ToList();
+            lilEditorParameters.instance.modifiedShaders = "";
             if(!ShouldOptimization()) return;
-            if(File.Exists(lilDirectoryManager.forceOptimizeBuildTempPath)) File.Delete(lilDirectoryManager.forceOptimizeBuildTempPath);
+            lilEditorParameters.instance.forceOptimize = false;
             lilToonSetting shaderSetting = null;
             InitializeShaderSetting(ref shaderSetting);
 
             lilOptimizer.ResetInputHLSL();
 
-            var shaders = shaderNames.Select(n => Shader.Find(n)).Where(s => s != null).ToList();
             if(shaderSetting.isDebugOptimize)
             {
                 ApplyShaderSettingOptimized();
@@ -897,13 +973,18 @@ public class lilToonSetting : ScriptableObject
 
         if(!shaderSetting.LIL_FEATURE_ANIMATE_MAIN_UV && material.HasProperty("_MainTex_ScrollRotate") && material.GetVector("_MainTex_ScrollRotate") != lilConstants.defaultScrollRotate)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ANIMATE_MAIN_UV : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ANIMATE_MAIN_UV : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ANIMATE_MAIN_UV = true;
         }
         if(!shaderSetting.LIL_FEATURE_SHADOW && material.HasProperty("_UseShadow") && material.GetFloat("_UseShadow") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_SHADOW : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_SHADOW : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_SHADOW = true;
+        }
+        if(!shaderSetting.LIL_FEATURE_RIMSHADE && material.HasProperty("_UseRimShade") && material.GetFloat("_UseRimShade") != 0.0f)
+        {
+            logs.Add("[lilToon] LIL_FEATURE_RIMSHADE : " + AssetDatabase.GetAssetPath(material));
+            shaderSetting.LIL_FEATURE_RIMSHADE = true;
         }
         if(!shaderSetting.LIL_FEATURE_RECEIVE_SHADOW && material.HasProperty("_UseShadow") && material.GetFloat("_UseShadow") != 0.0f && (
             (material.HasProperty("_ShadowReceive") && material.GetFloat("_ShadowReceive") > 0.0f) ||
@@ -911,22 +992,22 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Shadow3rdReceive") && material.GetFloat("_Shadow3rdReceive") > 0.0f))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_RECEIVE_SHADOW : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_RECEIVE_SHADOW : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_RECEIVE_SHADOW = true;
         }
         if(!shaderSetting.LIL_FEATURE_DISTANCE_FADE && material.HasProperty("_DistanceFade") && material.GetVector("_DistanceFade").z != lilConstants.defaultDistanceFadeParams.z)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_DISTANCE_FADE : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_DISTANCE_FADE : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_DISTANCE_FADE = true;
         }
         if(!shaderSetting.LIL_FEATURE_SHADOW_3RD && material.HasProperty("_Shadow3rdColor") && material.GetColor("_Shadow3rdColor").a != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_SHADOW_3RD : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_SHADOW_3RD : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_SHADOW_3RD = true;
         }
         if(!shaderSetting.LIL_FEATURE_SHADOW_LUT && material.HasProperty("_ShadowColorType") && material.GetFloat("_ShadowColorType") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_SHADOW_LUT : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_SHADOW_LUT : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_SHADOW_LUT = true;
         }
 
@@ -934,8 +1015,8 @@ public class lilToonSetting : ScriptableObject
         {
             if(!shaderSetting.LIL_FEATURE_FUR_COLLISION && material.HasProperty("_FurTouchStrength") && material.GetFloat("_FurTouchStrength") != 0.0f)
             {
-                Debug.Log("[lilToon] LIL_FEATURE_FUR_COLLISION : " + AssetDatabase.GetAssetPath(material));
-                Debug.Log("[lilToon] LIL_OPTIMIZE_USE_VERTEXLIGHT : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_FEATURE_FUR_COLLISION : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_OPTIMIZE_USE_VERTEXLIGHT : " + AssetDatabase.GetAssetPath(material));
                 shaderSetting.LIL_FEATURE_FUR_COLLISION = true;
                 shaderSetting.LIL_OPTIMIZE_USE_VERTEXLIGHT = true;
             }
@@ -943,22 +1024,22 @@ public class lilToonSetting : ScriptableObject
 
         if(!shaderSetting.LIL_FEATURE_MAIN_TONE_CORRECTION && material.HasProperty("_MainTexHSVG") && material.GetVector("_MainTexHSVG") != lilConstants.defaultHSVG)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MAIN_TONE_CORRECTION : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MAIN_TONE_CORRECTION : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MAIN_TONE_CORRECTION = true;
         }
         if(!shaderSetting.LIL_FEATURE_MAIN_GRADATION_MAP && material.HasProperty("_MainGradationStrength") && material.GetFloat("_MainGradationStrength") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MAIN_GRADATION_MAP : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MAIN_GRADATION_MAP : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MAIN_GRADATION_MAP = true;
         }
         if(!shaderSetting.LIL_FEATURE_MAIN2ND && material.HasProperty("_UseMain2ndTex") && material.GetFloat("_UseMain2ndTex") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MAIN2ND : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MAIN2ND : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MAIN2ND = true;
         }
         if(!shaderSetting.LIL_FEATURE_MAIN3RD && material.HasProperty("_UseMain3rdTex") && material.GetFloat("_UseMain3rdTex") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MAIN3RD : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MAIN3RD : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MAIN3RD = true;
         }
         if(!shaderSetting.LIL_FEATURE_DECAL && (
@@ -966,7 +1047,7 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Main3rdTexIsDecal") && material.GetFloat("_Main3rdTexIsDecal") != 0.0f))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_DECAL : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_DECAL : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_DECAL = true;
         }
         if(!shaderSetting.LIL_FEATURE_ANIMATE_DECAL && (
@@ -974,7 +1055,7 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Main3rdTexDecalAnimation") && material.GetVector("_Main3rdTexDecalAnimation") != lilConstants.defaultDecalAnim))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ANIMATE_DECAL : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ANIMATE_DECAL : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ANIMATE_DECAL = true;
         }
         if(!shaderSetting.LIL_FEATURE_LAYER_DISSOLVE && (
@@ -982,22 +1063,22 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Main3rdDissolveParams") && material.GetVector("_Main3rdDissolveParams").x != lilConstants.defaultDissolveParams.x))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_LAYER_DISSOLVE : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_LAYER_DISSOLVE : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_LAYER_DISSOLVE = true;
         }
         if(!shaderSetting.LIL_FEATURE_ALPHAMASK && material.HasProperty("_AlphaMaskMode") && material.GetFloat("_AlphaMaskMode") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ALPHAMASK : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ALPHAMASK : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ALPHAMASK = true;
         }
         if(!shaderSetting.LIL_FEATURE_EMISSION_1ST && material.HasProperty("_UseEmission") && material.GetFloat("_UseEmission") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_EMISSION_1ST : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_EMISSION_1ST : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_EMISSION_1ST = true;
         }
         if(!shaderSetting.LIL_FEATURE_EMISSION_2ND && material.HasProperty("_UseEmission2nd") && material.GetFloat("_UseEmission2nd") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_EMISSION_2ND : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_EMISSION_2ND : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_EMISSION_2ND = true;
         }
         if(!shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_UV && (
@@ -1005,7 +1086,7 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Emission2ndMap_ScrollRotate") && material.GetVector("_Emission2ndMap_ScrollRotate") != lilConstants.defaultScrollRotate))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ANIMATE_EMISSION_UV : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ANIMATE_EMISSION_UV : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_UV = true;
         }
         if(!shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_MASK_UV && (
@@ -1013,7 +1094,7 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Emission2ndBlendMask_ScrollRotate") && material.GetVector("_Emission2ndBlendMask_ScrollRotate") != lilConstants.defaultScrollRotate))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ANIMATE_EMISSION_MASK_UV : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ANIMATE_EMISSION_MASK_UV : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ANIMATE_EMISSION_MASK_UV = true;
         }
         if(!shaderSetting.LIL_FEATURE_EMISSION_GRADATION && (
@@ -1021,92 +1102,92 @@ public class lilToonSetting : ScriptableObject
             (material.HasProperty("_Emission2ndUseGrad") && material.GetFloat("_Emission2ndUseGrad") != 0.0f))
         )
         {
-            Debug.Log("[lilToon] LIL_FEATURE_EMISSION_GRADATION : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_EMISSION_GRADATION : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_EMISSION_GRADATION = true;
         }
         if(!shaderSetting.LIL_FEATURE_NORMAL_1ST && material.HasProperty("_UseBumpMap") && material.GetFloat("_UseBumpMap") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_NORMAL_1ST : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_NORMAL_1ST : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_NORMAL_1ST = true;
         }
         if(!shaderSetting.LIL_FEATURE_NORMAL_2ND && material.HasProperty("_UseBump2ndMap") && material.GetFloat("_UseBump2ndMap") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_NORMAL_2ND : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_NORMAL_2ND : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_NORMAL_2ND = true;
         }
         if(!shaderSetting.LIL_FEATURE_ANISOTROPY && material.HasProperty("_UseAnisotropy") && material.GetFloat("_UseAnisotropy") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_ANISOTROPY : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_ANISOTROPY : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_ANISOTROPY = true;
         }
         if(!shaderSetting.LIL_FEATURE_REFLECTION && material.HasProperty("_UseReflection") && material.GetFloat("_UseReflection") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_REFLECTION : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_REFLECTION : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_REFLECTION = true;
         }
         if(!shaderSetting.LIL_FEATURE_MATCAP && material.HasProperty("_UseMatCap") && material.GetFloat("_UseMatCap") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MATCAP : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MATCAP : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MATCAP = true;
         }
         if(!shaderSetting.LIL_FEATURE_MATCAP_2ND && material.HasProperty("_UseMatCap2nd") && material.GetFloat("_UseMatCap2nd") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_MATCAP_2ND : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_MATCAP_2ND : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_MATCAP_2ND = true;
         }
         if(!shaderSetting.LIL_FEATURE_RIMLIGHT && material.HasProperty("_UseRim") && material.GetFloat("_UseRim") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_RIMLIGHT : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_RIMLIGHT : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_RIMLIGHT = true;
         }
         if(!shaderSetting.LIL_FEATURE_RIMLIGHT_DIRECTION && material.HasProperty("_RimDirStrength") && material.GetFloat("_RimDirStrength") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_RIMLIGHT_DIRECTION : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_RIMLIGHT_DIRECTION : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_RIMLIGHT_DIRECTION = true;
         }
         if(!shaderSetting.LIL_FEATURE_GLITTER && material.HasProperty("_UseGlitter") && material.GetFloat("_UseGlitter") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_GLITTER : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_GLITTER : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_GLITTER = true;
         }
         if(!shaderSetting.LIL_FEATURE_BACKLIGHT && material.HasProperty("_UseBacklight") && material.GetFloat("_UseBacklight") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_BACKLIGHT : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_BACKLIGHT : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_BACKLIGHT = true;
         }
         if(!shaderSetting.LIL_FEATURE_PARALLAX && material.HasProperty("_UseParallax") && material.GetFloat("_UseParallax") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_PARALLAX : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_PARALLAX : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_PARALLAX = true;
             if(!shaderSetting.LIL_FEATURE_POM && material.HasProperty("_UsePOM") && material.GetFloat("_UsePOM") != 0.0f)
             {
-                Debug.Log("[lilToon] LIL_FEATURE_POM : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_FEATURE_POM : " + AssetDatabase.GetAssetPath(material));
                 shaderSetting.LIL_FEATURE_POM = true;
             }
         }
         if(!shaderSetting.LIL_FEATURE_AUDIOLINK && material.HasProperty("_UseAudioLink") && material.GetFloat("_UseAudioLink") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_AUDIOLINK : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_AUDIOLINK : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_AUDIOLINK = true;
         }
         if(!shaderSetting.LIL_FEATURE_AUDIOLINK_VERTEX && material.HasProperty("_AudioLink2Vertex") && material.GetFloat("_AudioLink2Vertex") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_AUDIOLINK_VERTEX : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_AUDIOLINK_VERTEX : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_AUDIOLINK_VERTEX = true;
         }
         if(!shaderSetting.LIL_FEATURE_AUDIOLINK_LOCAL && material.HasProperty("_AudioLinkAsLocal") && material.GetFloat("_AudioLinkAsLocal") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_AUDIOLINK_LOCAL : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_AUDIOLINK_LOCAL : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_AUDIOLINK_LOCAL = true;
         }
         if(!shaderSetting.LIL_FEATURE_DISSOLVE && material.HasProperty("_DissolveParams") && material.GetVector("_DissolveParams").x != lilConstants.defaultDissolveParams.x)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_DISSOLVE : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_DISSOLVE : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_DISSOLVE = true;
         }
         if(!shaderSetting.LIL_FEATURE_DITHER && material.HasProperty("_UseDither") && material.GetFloat("_UseDither") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_FEATURE_DITHER : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_DITHER : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_DITHER = true;
         }
         if(!shaderSetting.LIL_FEATURE_IDMASK && (
@@ -1117,36 +1198,51 @@ public class lilToonSetting : ScriptableObject
             material.HasProperty("_IDMask5") && material.GetFloat("_IDMask5") != 0.0f ||
             material.HasProperty("_IDMask6") && material.GetFloat("_IDMask6") != 0.0f ||
             material.HasProperty("_IDMask7") && material.GetFloat("_IDMask7") != 0.0f ||
-            material.HasProperty("_IDMask8") && material.GetFloat("_IDMask8") != 0.0f
+            material.HasProperty("_IDMask8") && material.GetFloat("_IDMask8") != 0.0f ||
+            material.HasProperty("_IDMaskPrior1") && material.GetFloat("_IDMaskPrior1") != 0.0f ||
+            material.HasProperty("_IDMaskPrior2") && material.GetFloat("_IDMaskPrior2") != 0.0f ||
+            material.HasProperty("_IDMaskPrior3") && material.GetFloat("_IDMaskPrior3") != 0.0f ||
+            material.HasProperty("_IDMaskPrior4") && material.GetFloat("_IDMaskPrior4") != 0.0f ||
+            material.HasProperty("_IDMaskPrior5") && material.GetFloat("_IDMaskPrior5") != 0.0f ||
+            material.HasProperty("_IDMaskPrior6") && material.GetFloat("_IDMaskPrior6") != 0.0f ||
+            material.HasProperty("_IDMaskPrior7") && material.GetFloat("_IDMaskPrior7") != 0.0f ||
+            material.HasProperty("_IDMaskPrior8") && material.GetFloat("_IDMaskPrior8") != 0.0f ||
+            material.HasProperty("_IDMaskIsBitmap") && material.GetFloat("_IDMaskIsBitmap") != 0.0f ||
+            material.HasProperty("_IDMaskCompile") && material.GetFloat("_IDMaskCompile") != 0.0f
         ))
         {
-            Debug.Log("[lilToon] LIL_FEATURE_IDMASK : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_FEATURE_IDMASK : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_FEATURE_IDMASK = true;
         }
 
+        if(!shaderSetting.LIL_FEATURE_UDIMDISCARD && material.HasProperty("_UDIMDiscardCompile") && material.GetFloat("_UDIMDiscardCompile") != 0.0f) {
+            logs.Add("[lilToon] LIL_FEATURE_UDIMDISCARD : " + AssetDatabase.GetAssetPath(material));
+            shaderSetting.LIL_FEATURE_UDIMDISCARD = true;
+        }
+           
         // Outline
         if(material.shader.name.Contains("Outline"))
         {
             if(!shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV && material.HasProperty("_OutlineTex_ScrollRotate") && material.GetVector("_OutlineTex_ScrollRotate") != lilConstants.defaultScrollRotate)
             {
-                Debug.Log("[lilToon] LIL_FEATURE_ANIMATE_OUTLINE_UV : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_FEATURE_ANIMATE_OUTLINE_UV : " + AssetDatabase.GetAssetPath(material));
                 shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV = true;
             }
             if(!shaderSetting.LIL_FEATURE_OUTLINE_TONE_CORRECTION && material.HasProperty("_OutlineTexHSVG") && material.GetVector("_OutlineTexHSVG") != lilConstants.defaultHSVG)
             {
-                Debug.Log("[lilToon] LIL_FEATURE_OUTLINE_TONE_CORRECTION : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_FEATURE_OUTLINE_TONE_CORRECTION : " + AssetDatabase.GetAssetPath(material));
                 shaderSetting.LIL_FEATURE_OUTLINE_TONE_CORRECTION = true;
             }
             if(!shaderSetting.LIL_FEATURE_OUTLINE_RECEIVE_SHADOW && material.HasProperty("_OutlineLitShadowReceive") && material.GetFloat("_OutlineLitShadowReceive") != 0.0f)
             {
-                Debug.Log("[lilToon] LIL_FEATURE_OUTLINE_RECEIVE_SHADOW : " + AssetDatabase.GetAssetPath(material));
+                logs.Add("[lilToon] LIL_FEATURE_OUTLINE_RECEIVE_SHADOW : " + AssetDatabase.GetAssetPath(material));
                 shaderSetting.LIL_FEATURE_OUTLINE_RECEIVE_SHADOW = true;
             }
         }
 
         if(!shaderSetting.LIL_OPTIMIZE_USE_VERTEXLIGHT && material.HasProperty("_VertexLightStrength") && material.GetFloat("_VertexLightStrength") != 0.0f)
         {
-            Debug.Log("[lilToon] LIL_OPTIMIZE_USE_VERTEXLIGHT : " + AssetDatabase.GetAssetPath(material));
+            logs.Add("[lilToon] LIL_OPTIMIZE_USE_VERTEXLIGHT : " + AssetDatabase.GetAssetPath(material));
             shaderSetting.LIL_OPTIMIZE_USE_VERTEXLIGHT = true;
         }
 
@@ -1177,6 +1273,7 @@ public class lilToonSetting : ScriptableObject
             shaderSetting.LIL_FEATURE_DISTANCE_FADE = shaderSetting.LIL_FEATURE_DISTANCE_FADE || propname.Contains("_DistanceFade");
             shaderSetting.LIL_FEATURE_SHADOW_3RD = shaderSetting.LIL_FEATURE_SHADOW_3RD || propname.Contains("_Shadow3rdColor");
             shaderSetting.LIL_FEATURE_SHADOW_LUT = shaderSetting.LIL_FEATURE_SHADOW_LUT || propname.Contains("_ShadowColorType");
+            shaderSetting.LIL_FEATURE_RIMSHADE = shaderSetting.LIL_FEATURE_RIMSHADE || propname.Contains("_UseRimShade");
 
             shaderSetting.LIL_FEATURE_FUR_COLLISION = shaderSetting.LIL_FEATURE_FUR_COLLISION || propname.Contains("_FurTouchStrength");
 
@@ -1212,19 +1309,21 @@ public class lilToonSetting : ScriptableObject
             shaderSetting.LIL_FEATURE_DITHER = shaderSetting.LIL_FEATURE_DITHER || propname.Contains("_UseDither");
 
             if(!shaderSetting.LIL_FEATURE_IDMASK && (
-                propname.Contains("_IDMask1") || propname.Contains("_IDMaskIndex1") ||
-                propname.Contains("_IDMask2") || propname.Contains("_IDMaskIndex2") ||
-                propname.Contains("_IDMask3") || propname.Contains("_IDMaskIndex3") ||
-                propname.Contains("_IDMask4") || propname.Contains("_IDMaskIndex4") ||
-                propname.Contains("_IDMask5") || propname.Contains("_IDMaskIndex5") ||
-                propname.Contains("_IDMask6") || propname.Contains("_IDMaskIndex6") ||
-                propname.Contains("_IDMask7") || propname.Contains("_IDMaskIndex7") ||
-                propname.Contains("_IDMask8") || propname.Contains("_IDMaskIndex8")
+                propname.Contains("_IDMask1") || propname.Contains("_IDMaskIndex1") || propname.Contains("_IDMaskPrior1") ||
+                propname.Contains("_IDMask2") || propname.Contains("_IDMaskIndex2") || propname.Contains("_IDMaskPrior2") ||
+                propname.Contains("_IDMask3") || propname.Contains("_IDMaskIndex3") || propname.Contains("_IDMaskPrior3") ||
+                propname.Contains("_IDMask4") || propname.Contains("_IDMaskIndex4") || propname.Contains("_IDMaskPrior4") ||
+                propname.Contains("_IDMask5") || propname.Contains("_IDMaskIndex5") || propname.Contains("_IDMaskPrior5") ||
+                propname.Contains("_IDMask6") || propname.Contains("_IDMaskIndex6") || propname.Contains("_IDMaskPrior6") ||
+                propname.Contains("_IDMask7") || propname.Contains("_IDMaskIndex7") || propname.Contains("_IDMaskPrior7") ||
+                propname.Contains("_IDMask8") || propname.Contains("_IDMaskIndex8") || propname.Contains("_IDMaskPrior8")
             ))
             {
                 shaderSetting.LIL_FEATURE_IDMASK = true;
             }
 
+            shaderSetting.LIL_FEATURE_UDIMDISCARD = shaderSetting.LIL_FEATURE_UDIMDISCARD || propname.Contains("_UDIMDiscardCompile");
+            
             shaderSetting.LIL_FEATURE_ENCRYPTION = shaderSetting.LIL_FEATURE_ENCRYPTION || propname.Contains("_BitKey0");
 
             shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV = shaderSetting.LIL_FEATURE_ANIMATE_OUTLINE_UV || propname.Contains("_OutlineTex_ScrollRotate");
@@ -1278,6 +1377,7 @@ public class lilToonSetting : ScriptableObject
         CheckTexture(ref shaderSetting.LIL_FEATURE_ShadowColorTex            , "_ShadowColorTex", material);
         CheckTexture(ref shaderSetting.LIL_FEATURE_Shadow2ndColorTex         , "_Shadow2ndColorTex", material);
         CheckTexture(ref shaderSetting.LIL_FEATURE_Shadow3rdColorTex         , "_Shadow3rdColorTex", material);
+        CheckTexture(ref shaderSetting.LIL_FEATURE_RimShadeMask              , "_RimShadeMask", material);
         CheckTexture(ref shaderSetting.LIL_FEATURE_BacklightColorTex         , "_BacklightColorTex", material);
         CheckTexture(ref shaderSetting.LIL_FEATURE_SmoothnessTex             , "_SmoothnessTex", material);
         CheckTexture(ref shaderSetting.LIL_FEATURE_MetallicGlossMap          , "_MetallicGlossMap", material);
@@ -1337,6 +1437,7 @@ public class lilToonSetting : ScriptableObject
         shaderSetting.LIL_FEATURE_ShadowColorTex             = shaderSetting.LIL_FEATURE_ShadowColorTex           || propname.Contains("_ShadowColorTex");
         shaderSetting.LIL_FEATURE_Shadow2ndColorTex          = shaderSetting.LIL_FEATURE_Shadow2ndColorTex        || propname.Contains("_Shadow2ndColorTex");
         shaderSetting.LIL_FEATURE_Shadow3rdColorTex          = shaderSetting.LIL_FEATURE_Shadow3rdColorTex        || propname.Contains("_Shadow3rdColorTex");
+        shaderSetting.LIL_FEATURE_RimShadeMask               = shaderSetting.LIL_FEATURE_RimShadeMask             || propname.Contains("_RimShadeMask");
         shaderSetting.LIL_FEATURE_BacklightColorTex          = shaderSetting.LIL_FEATURE_BacklightColorTex        || propname.Contains("_BacklightColorTex");
         shaderSetting.LIL_FEATURE_SmoothnessTex              = shaderSetting.LIL_FEATURE_SmoothnessTex            || propname.Contains("_SmoothnessTex");
         shaderSetting.LIL_FEATURE_MetallicGlossMap           = shaderSetting.LIL_FEATURE_MetallicGlossMap         || propname.Contains("_MetallicGlossMap");
@@ -1374,20 +1475,14 @@ public class lilToonSetting : ScriptableObject
     private static void CheckTexture(ref bool LIL_FEATURE_Tex, string propname, Material material)
     {
         if(LIL_FEATURE_Tex || !material.HasProperty(propname) || material.GetTexture(propname) == null) return;
-        Debug.Log("[lilToon] " + propname + " : " + AssetDatabase.GetAssetPath(material));
+        logs.Add("[lilToon] " + propname + " : " + AssetDatabase.GetAssetPath(material));
         LIL_FEATURE_Tex = true;
-    }
-
-    internal static void ForceOptimization()
-    {
-        if(File.Exists(lilDirectoryManager.forceOptimizeBuildTempPath)) return;
-        File.Create(lilDirectoryManager.forceOptimizeBuildTempPath);
     }
 
     internal static bool ShouldOptimization()
     {
-        if(File.Exists(lilDirectoryManager.postBuildTempPath)) return false;
-        if(File.Exists(lilDirectoryManager.forceOptimizeBuildTempPath)) return true;
+        if(!string.IsNullOrEmpty(lilEditorParameters.instance.modifiedShaders)) return false;
+        if(lilEditorParameters.instance.forceOptimize) return true;
 
         lilToonSetting shaderSetting = null;
         InitializeShaderSetting(ref shaderSetting);
@@ -1430,9 +1525,18 @@ public class lilToonSetting : ScriptableObject
                 sr = new StreamReader(path);
             }
             string line;
+            bool isComment = false;
             while((line = sr.ReadLine()) != null)
             {
-                if(!line.Contains("UsePass")) continue;
+                isComment = line.Contains("/*");
+                if(isComment)
+                {
+                    if(!line.Contains("*/")) continue;
+                    isComment = false;
+                    line = line.Substring(line.IndexOf("*/") + 2);
+                }
+                line = line.Trim();
+                if(!line.StartsWith("UsePass")) continue;
                 int first = line.IndexOf('"') + 1;
                 int second = line.IndexOf('"', first);
                 if(line.Substring(0, first).Contains("//")) continue;

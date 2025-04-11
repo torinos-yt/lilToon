@@ -66,10 +66,9 @@ namespace lilToon
         public static GUIContent cubemapContent;
         public static GUIContent audioLinkLocalMapContent;
         public static GUIContent gradationMapContent;
-        public static LanguageSettings langSet = new LanguageSettings();
+        public static LanguageSettings langSet { get { return LanguageSettings.instance; } }
 
-        [Serializable]
-        public class LanguageSettings
+        public class LanguageSettings : ScriptableSingleton<LanguageSettings>
         {
             public int languageNum = -1;
             public string languageNames = "";
@@ -84,27 +83,12 @@ namespace lilToon
             return string.IsNullOrEmpty(langSet.languageNames);
         }
 
-        public static void ApplySettingTemp()
-        {
-            if(!ShouldApplyTemp() || !File.Exists(lilDirectoryManager.languageSettingTempPath)) return;
-            StreamReader sr = new StreamReader(lilDirectoryManager.languageSettingTempPath);
-            string s = sr.ReadToEnd();
-            sr.Close();
-            if(!string.IsNullOrEmpty(s)) EditorJsonUtility.FromJsonOverwrite(s,langSet);
-        }
-
-        public static void SaveSettingTemp()
-        {
-            StreamWriter sw = new StreamWriter(lilDirectoryManager.languageSettingTempPath,false);
-            sw.Write(EditorJsonUtility.ToJson(langSet));
-            sw.Close();
-        }
-
         public static void LoadCustomLanguage(string langFileGUID)
         {
             LoadLanguage(lilDirectoryManager.GUIDToPath(langFileGUID));
         }
 
+        [Obsolete]
         public static void InitializeLanguage()
         {
             if(langSet.languageNum == -1)
@@ -124,14 +108,18 @@ namespace lilToon
 
         public static void UpdateLanguage()
         {
+            #pragma warning disable CS0612
             string langPath = lilDirectoryManager.GetEditorLanguageFileGUID();
+            #pragma warning restore CS0612
             LoadLanguage(langPath);
             InitializeLabels();
         }
 
         public static void SelectLang()
         {
+            #pragma warning disable CS0612
             InitializeLanguage();
+            #pragma warning restore CS0612
             int numbuf = langSet.languageNum;
             langSet.languageNum = EditorGUILayout.Popup("Language", langSet.languageNum, langSet.languageNames.Split('\t'));
             if(numbuf != langSet.languageNum) UpdateLanguage();
@@ -166,12 +154,10 @@ namespace lilToon
             loc["sDissolveParams"]           = BuildParams(GetLoc("sDissolveMode"), GetLoc("sDissolveModeNone"), GetLoc("sDissolveModeAlpha"), GetLoc("sDissolveModeUV"), GetLoc("sDissolveModePosition"), GetLoc("sDissolveShape"), GetLoc("sDissolveShapePoint"), GetLoc("sDissolveShapeLine"), GetLoc("sBorder"), GetLoc("sBlur"));
             loc["sDissolveParamsModes"]       = BuildParams(GetLoc("sDissolve"), GetLoc("sDissolveModeNone"), GetLoc("sDissolveModeAlpha"), GetLoc("sDissolveModeUV"), GetLoc("sDissolveModePosition"));
             loc["sDissolveParamsOther"]      = BuildParams(GetLoc("sDissolveShape"), GetLoc("sDissolveShapePoint"), GetLoc("sDissolveShapeLine"), GetLoc("sBorder"), GetLoc("sBlur"), "Dummy");
-            //loc["sGlitterParams1"]           = BuildParams("Tiling", GetLoc("sParticleSize"), GetLoc("sContrast"));
             loc["sGlitterParams2"]           = BuildParams(GetLoc("sBlinkSpeed"), GetLoc("sAngleLimit"), GetLoc("sRimLightDirection"), GetLoc("sColorRandomness"));
-            loc["sTransparentMode"]          = BuildParams(GetLoc("sRenderingMode"), GetLoc("sRenderingModeOpaque"), GetLoc("sRenderingModeCutout"), GetLoc("sRenderingModeTransparent"), GetLoc("sRenderingModeRefraction"), GetLoc("sRenderingModeFur"), GetLoc("sRenderingModeFurCutout"), GetLoc("sRenderingModeGem"));
             loc["sOutlineVertexColorUsages"] = BuildParams(GetLoc("sVertexColor"), GetLoc("sNone"), GetLoc("sVertexR2Width"), GetLoc("sVertexR2InvWidth"), GetLoc("sVertexRGBA2Normal"));
             loc["sShadowColorTypes"]         = BuildParams(GetLoc("sColorType"), GetLoc("sColorTypeNormal"), GetLoc("sColorTypeLUT"));
-            loc["sShadowMaskTypes"]          = BuildParams(GetLoc("sMaskType"), GetLoc("sStrength"), GetLoc("sFlat"));
+            loc["sShadowMaskTypes"]          = BuildParams(GetLoc("sMaskType"), GetLoc("sStrength"), GetLoc("sFlat"), "SDF");
             loc["sHSVGs"]                    = BuildParams(GetLoc("sHue"), GetLoc("sSaturation"), GetLoc("sValue"), GetLoc("sGamma"));
             loc["sScrollRotates"]            = BuildParams(GetLoc("sAngle"), GetLoc("sUVAnimation"), GetLoc("sScroll"), GetLoc("sRotate"));
             loc["sDecalAnimations"]          = BuildParams(GetLoc("sAnimation"), GetLoc("sXFrames"), GetLoc("sYFrames"), GetLoc("sFrames"), GetLoc("sFPS"));
@@ -204,7 +190,7 @@ namespace lilToon
             sBlendModeList                  = new[]{GetLoc("sBlendModeNormal"), GetLoc("sBlendModeAdd"), GetLoc("sBlendModeScreen"), GetLoc("sBlendModeMul")};
             sOutlineVertexColorUsages       = BuildParams(GetLoc("sVertexColor"), GetLoc("sNone"), GetLoc("sVertexR2Width"), GetLoc("sVertexR2InvWidth"), GetLoc("sVertexRGBA2Normal"));
             sShadowColorTypes               = BuildParams(GetLoc("sColorType"), GetLoc("sColorTypeNormal"), GetLoc("sColorTypeLUT"));
-            sShadowMaskTypes                = BuildParams(GetLoc("sMaskType"), GetLoc("sStrength"), GetLoc("sFlat"));
+            sShadowMaskTypes                = BuildParams(GetLoc("sMaskType"), GetLoc("sStrength"), GetLoc("sFlat"), "SDF");
             colorRGBAContent                = new GUIContent(GetLoc("sColor"),                              GetLoc("sTextureRGBA"));
             colorAlphaRGBAContent           = new GUIContent(GetLoc("sColorAlpha"),                         GetLoc("sTextureRGBA"));
             maskBlendContent                = new GUIContent(GetLoc("sMask"),                               GetLoc("sBlendR"));
@@ -241,18 +227,22 @@ namespace lilToon
 
         public static string GetDisplayLabel(MaterialProperty prop)
         {
-            return string.Join("",
-                prop.displayName.Split('|').First().Split('+').Select(m=>GetLoc(m)).ToArray()
-            );
+            var labels = prop.displayName.Split('|').First().Split('+').Select(m=>GetLoc(m)).ToArray();
+            if(Event.current.alt) labels[0] = prop.name;
+            return string.Join("", labels);
         }
 
         public static string GetDisplayName(MaterialProperty prop)
         {
-            return string.Join("|",
-                prop.displayName.Split('|').Select(
-                    n=>string.Join("",n.Split('+').Select(m=>GetLoc(m)).ToArray())
-                ).ToArray()
-            );
+            var labels = prop.displayName.Split('|').Select(
+                n=>string.Join("",n.Split('+').Select(m=>GetLoc(m)).ToArray())
+            ).ToArray();
+            if(Event.current.alt)
+            {
+                if(labels[0].Contains("|")) labels[0] = prop.name + labels[0].Substring(labels[0].IndexOf("|"));
+                else labels[0] = prop.name;
+            }
+            return string.Join("|", labels);
         }
 
         public static string GetDisplayName(string label)
@@ -263,6 +253,9 @@ namespace lilToon
                 ).ToArray()
             );
         }
+
+        [Obsolete("This may be deleted in the future.")] public static void ApplySettingTemp(){}
+        [Obsolete("This may be deleted in the future.")] public static void SaveSettingTemp(){}
     }
 }
 #endif

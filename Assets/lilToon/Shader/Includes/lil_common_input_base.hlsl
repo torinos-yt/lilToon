@@ -80,6 +80,11 @@ float4  _MainTex_ST;
     #endif
 #endif
 
+// Rim Shade
+#if defined(LIL_FEATURE_RIMSHADE)
+    float4  _RimShadeColor;
+#endif
+
 // Backlight
 #if defined(LIL_FEATURE_BACKLIGHT)
     float4  _BacklightColor;
@@ -254,6 +259,7 @@ float4  _MainTex_ST;
 #if defined(LIL_FUR)
     float4  _FurNoiseMask_ST;
     float4  _FurVector;
+    float4  _FurRimColor;
 #endif
 
 // Refraction
@@ -338,6 +344,12 @@ float   _AAStrength;
     #endif
     float   _ShadowFlatBlur;
     float   _ShadowFlatBorder;
+#endif
+#if defined(LIL_FEATURE_RIMSHADE)
+    float _RimShadeNormalStrength;
+    float _RimShadeBorder;
+    float _RimShadeBlur;
+    float _RimShadeFresnelPower;
 #endif
 #if defined(LIL_FEATURE_BACKLIGHT)
     float   _BacklightNormalStrength;
@@ -481,6 +493,35 @@ float   _AAStrength;
     float   _IDMask6;
     float   _IDMask7;
     float   _IDMask8;
+    float   _IDMaskPrior1;
+    float   _IDMaskPrior2;
+    float   _IDMaskPrior3;
+    float   _IDMaskPrior4;
+    float   _IDMaskPrior5;
+    float   _IDMaskPrior6;
+    float   _IDMaskPrior7;
+    float   _IDMaskPrior8;
+#endif
+#if defined(LIL_FEATURE_UDIMDISCARD)
+    float _UDIMDiscardCompile;
+    float _UDIMDiscardMode;
+    float _UDIMDiscardUV;
+    float _UDIMDiscardRow3_0;
+    float _UDIMDiscardRow3_1;
+    float _UDIMDiscardRow3_2;
+    float _UDIMDiscardRow3_3;
+    float _UDIMDiscardRow2_0;
+    float _UDIMDiscardRow2_1;
+    float _UDIMDiscardRow2_2;
+    float _UDIMDiscardRow2_3;
+    float _UDIMDiscardRow1_0;
+    float _UDIMDiscardRow1_1;
+    float _UDIMDiscardRow1_2;
+    float _UDIMDiscardRow1_3;
+    float _UDIMDiscardRow0_0;
+    float _UDIMDiscardRow0_1;
+    float _UDIMDiscardRow0_2;
+    float _UDIMDiscardRow0_3;
 #endif
 float   _lilShadowCasterBias;
 
@@ -501,6 +542,8 @@ float   _lilShadowCasterBias;
     float   _FurRootOffset;
     float   _FurRandomize;
     float   _FurCutoutLength;
+    float   _FurRimFresnelPower;
+    float   _FurRimAntiLight;
     #if defined(LIL_FEATURE_FUR_COLLISION)
         float   _FurTouchStrength;
     #endif
@@ -536,6 +579,8 @@ float   _lilShadowCasterBias;
     int     _IDMaskIndex7;
     int     _IDMaskIndex8;
     uint    _IDMaskFrom;
+    uint    _IDMaskIsBitmap;
+    uint    _IDMaskControlsDissolve;
 #endif
 uint    _Cull;
 #if !defined(LIL_FUR) && !defined(LIL_REFRACTION) && !defined(LIL_GEM)
@@ -641,6 +686,9 @@ lilBool _Invisible;
 #if defined(LIL_FEATURE_SHADOW)
     lilBool _UseShadow;
     lilBool _ShadowPostAO;
+#endif
+#if defined(LIL_FEATURE_RIMSHADE)
+    lilBool _UseRimShade;
 #endif
 #if defined(LIL_FEATURE_BACKLIGHT)
     lilBool _UseBacklight;

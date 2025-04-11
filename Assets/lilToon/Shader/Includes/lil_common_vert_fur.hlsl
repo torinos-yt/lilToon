@@ -36,7 +36,7 @@ v2g vert(appdata input)
     //------------------------------------------------------------------------------------------------------------------------------
     // Invisible
     if(_Invisible) return output;
-
+    
     //------------------------------------------------------------------------------------------------------------------------------
     // Single Pass Instanced rendering
     LIL_SETUP_INSTANCE_ID(input);
@@ -123,6 +123,18 @@ v2g vert(appdata input)
 
     LIL_CUSTOM_VERT_COPY
 
+    //------------------------------------------------------------------------------------------------------------------------------
+    // UDIM Discard
+    #if defined(LIL_FEATURE_UDIMDISCARD) && !defined(LIL_LITE)
+        if(_UDIMDiscardMode == 0 && _UDIMDiscardCompile == 1 && LIL_CHECK_UDIMDISCARD(input)) // Discard Vertices instead of just pixels
+        {
+            #if defined(LIL_V2F_POSITION_CS)
+            output.positionWS = 0.0/0.0;
+            #endif
+            return output;
+        }
+    #endif
+    
     //------------------------------------------------------------------------------------------------------------------------------
     // Fog & Lighting
     lilFragData fd = lilInitFragData();
@@ -219,7 +231,7 @@ v2g vert(appdata input)
             #endif
             default: idMaskArg = input.vertexID; break;
         }
-        bool idMasked = IDMask(idMaskArg,idMaskIndices,idMaskFlags);
+        bool idMasked = IDMask(idMaskArg,_IDMaskIsBitmap,idMaskIndices,idMaskFlags);
         #if defined(LIL_V2G_POSITION_WS)
             output.positionWS = idMasked ? 0.0/0.0 : output.positionWS;
         #endif
@@ -262,6 +274,9 @@ void AppendFur(inout TriangleStream<v2f> outStream, inout v2f output, v2g input[
     #if defined(LIL_V2F_NORMAL_WS)
         output.normalWS = lilLerp3(input[0].normalWS, input[1].normalWS, input[2].normalWS, factor);
     #endif
+    #if defined(LIL_V2F_LIGHTCOLOR) && defined(LIL_FEATURE_LTCGI) && defined(LIL_PASS_FORWARD)
+        output.lightColor = lilLerp3(input[0].lightColor, input[1].lightColor, input[2].lightColor, factor);
+    #endif
     #if defined(LIL_V2F_VERTEXLIGHT_FOG) && !(!defined(LIL_USE_ADDITIONALLIGHT_VS) && defined(LIL_HDRP))
         output.vlf = lilLerp3(input[0].vlf, input[1].vlf, input[2].vlf, factor);
     #endif
@@ -285,13 +300,13 @@ void AppendFur(inout TriangleStream<v2f> outStream, inout v2f output, v2g input[
         // Clipping Canceller
         #if defined(UNITY_REVERSED_Z)
             // DirectX
-            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 output.positionCS.z = output.positionCS.z * 0.0001 + output.positionCS.w * 0.999;
             }
         #else
             // OpenGL
-            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 output.positionCS.z = output.positionCS.z * 0.0001 - output.positionCS.w * 0.999;
             }
@@ -329,13 +344,13 @@ void AppendFur(inout TriangleStream<v2f> outStream, inout v2f output, v2g input[
         // Clipping Canceller
         #if defined(UNITY_REVERSED_Z)
             // DirectX
-            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 output.positionCS.z = output.positionCS.z * 0.0001 + output.positionCS.w * 0.999;
             }
         #else
             // OpenGL
-            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
+            if(output.positionCS.w < _ProjectionParams.y * 1.01 && output.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING && !LIL_IS_MIRROR)
             {
                 output.positionCS.z = output.positionCS.z * 0.0001 - output.positionCS.w * 0.999;
             }

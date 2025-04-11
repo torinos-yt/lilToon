@@ -232,6 +232,7 @@ sColorFromMain	Get color from Main	メインカラーから色を取得	메인 �
 sFurSetting	Fur	ファー設定	퍼 설정	毛发设置	毛皮設置
 sFurTips	You can set the length and direction of the fur.	ファーの長さや向き、質感の設定ができます	퍼의 길이와 방향, 질감을 설정할 수 있습니다	你可以设置毛发的长度和方向。	你可以設置毛皮的長度和方向。
 sFur	Fur	ファー	퍼	毛发	毛皮
+sAntiLight	Anti Light	Anti Light	Anti Light	Anti Light	Anti Light
 sGravity	Gravity	重力	중력	重力	重力
 sAO	AO	陰影	AO	AO	AO
 sVertexColor2Vector	VertexColor -> Vector	VertexColor -> Vector	VertexColor -> Vector	VertexColor -> Vector	VertexColor -> Vector
@@ -299,6 +300,10 @@ sDissolveModePosition	Position	座標	좌표	坐标	職位
 sDissolveShape	Shape	形状	모양	形状	形狀
 sDissolveShapePoint	Point	点	점	点	點
 sDissolveShapeLine	Line	線	선	线	線
+sIDMask	ID Mask	ID Mask	ID Mask	ID Mask	ID Mask
+sUDIMDiscard	UV Tile Discard	UV Tile Discard	UV Tile Discard	UV Tile Discard	UV Tile Discard
+sUDIMDiscardUV	Discard UV	Discard UV	Discard UV	Discard UV	Discard UV
+sUDIMDiscardMode	Discard Mode	削除モード	무시 모드	丢弃模式	丟棄模式
 sEncryption	Encryption	暗号化	암호화	加密	加密
 sEncryptionTips	Decrypt the mesh from 4 keys.	4つのキーによってメッシュを復号化します	4개의 키를 사용하여 메쉬를 복호화합니다	用 4 个密钥解密该网格	從4個密鑰解密該網狀
 sIgnoreEncryption	Ignore Encryption	Ignore Encryption	Ignore Encryption	Ignore Encryption	Ignore Encryption
@@ -421,6 +426,7 @@ sDialogGifToAtlas	Convert Gif to Atlas	Gifをアトラス化	Gif를 아틀라스
 sDialogTexPow2	Do you want to adjust the texture resolution to power of 2?	テクスチャ全体の解像度を2の累乗に合わせますか?	텍스처 전체 해상도를 2의 거듭 제곱에 맞게 하시겠습니까?	你要把纹理分辨率调整为 2 的幂吗？	你想把紋理分辨率調整為2的冪嗎？
 sDialogImportOldVer	The package you are importing is an older version than the already imported lilToon. Do you want to continue?	インポートしようとしているパッケージは既にインポートされているlilToonよりも古いバージョンです。続行しますか？	Import하고 있는 패키지는 이미 Import된 lilToon보다 오래된 버전입니다.속행할까요?	您要导入的包版本早于已导入的 lilToon 版本。是否继续？	您要導入的包的版本早於已導入的lilToon。是否繼續？
 sDialogImportPackage	The UPM version of lilToon has already been imported. Do you want to continue importing the unitypackage version? (This may cause script errors, etc.)	既にUPM版lilToonがインポートされています。unitypackage版のインポートを続行しますか？（これはスクリプトエラー等を引き起こす可能性があります。）	이미 UPM 버전 lilToon이 임포트 되어 있습니다.unity package 버전 가져오기를 계속하시겠습니까?(이것은 스크립트 에러등을 일으킬 가능성이 있습니다.)	已经导入了UPM版lilToon。是否继续导入unitypackage版？（这可能会导致脚本错误等。）	已經導入了UPM版lilToon。是否繼續導入unitypackage版？ （這可能會導致腳本錯誤等。）
+sWarnOptimiseMeshData	Due to a bug in Unity, even necessary vertex data may be deleted. If the problem occurs, please turn off "Project Settings/Player/Optimize Mesh Data".	Unityのバグにより必要な頂点データまで削除されることがあります。不具合が発生する場合は"Project Settings/Player/Optimize Mesh Data"をオフにしてください。	Unity 버그로 인해 필요한 정점 데이터까지 삭제될 수 있습니다.오류가 발생할 경우 "Project Settings/Player/Optimize Mesh Data"를 꺼주세요.	Unity错误可能会删除所需的顶点数据。发生故障时，请关闭“Project Setting/Prer/Optimize Mesh Data”。	Unity錯誤可能會刪除所需的頂點資料。 發生故障時，請關閉「Project Setting/Prer/Optimize Mesh Data」。
 sPresets	Presets	プリセット	프리셋	预设	預設
 sPresetsNotAvailable	Presets are not available for this shader.	プリセットはこのシェーダーでは利用できません。	사전 설정이 쉐이더를 사용할 수 없습니다.	预设在此着色器中不可用。	預設在此著色器中不可用。
 sPresetIsMaterial	Currently selected is not a Material.	マテリアル以外が選択されています。	머티리얼 이외를 선택하고 있습니다.	当前选择的不是材质。	選擇Material以外的
@@ -495,6 +501,7 @@ sAnchorMainColor1	color/maincolor	color/maincolor	color/maincolor	color/maincolo
 sAnchorMainColor2	color/maincolor_layer	color/maincolor_layer	color/maincolor_layer	color/maincolor_layer	color/maincolor_layer
 sAnchorAlphaMask	color/alphamask	color/alphamask	color/alphamask	color/alphamask	color/alphamask
 sAnchorShadow	color/shadow	color/shadow	color/shadow	color/shadow	color/shadow
+sAnchorRimShade	color/rimshade	color/rimshade	color/rimshade	color/rimshade	color/rimshade
 sAnchorEmission	color/emission	color/emission	color/emission	color/emission	color/emission
 sAnchorNormalMap	reflections/normal	reflections/normal	reflections/normal	reflections/normal	reflections/normal
 sAnchorAnisotropy	reflections/anisotropy	reflections/anisotropy	reflections/anisotropy	reflections/anisotropy	reflections/anisotropy
@@ -510,6 +517,7 @@ sAnchorDistanceFade	advanced/distancefade	advanced/distancefade	advanced/distanc
 sAnchorAudioLink	advanced/audiolink	advanced/audiolink	advanced/audiolink	advanced/audiolink	advanced/audiolink
 sAnchorDissolve	advanced/dissolve	advanced/dissolve	advanced/dissolve	advanced/dissolve	advanced/dissolve
 sAnchorIDMask	advanced/idmask	advanced/idmask	advanced/idmask	advanced/idmask	advanced/idmask
+sAnchorUDIMDiscard	advanced/uvtilediscard	advanced/uvtilediscard	advanced/uvtilediscard	advanced/uvtilediscard	advanced/uvtilediscard
 sAnchorEncryption	advanced/encryption	advanced/encryption	advanced/encryption	advanced/encryption	advanced/encryption
 sAnchorStencil	advanced/stencil	advanced/stencil	advanced/stencil	advanced/stencil	advanced/stencil
 sAnchorRendering	advanced/rendering	advanced/rendering	advanced/rendering	advanced/rendering	advanced/rendering

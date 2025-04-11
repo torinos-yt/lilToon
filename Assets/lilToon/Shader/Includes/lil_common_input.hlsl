@@ -257,6 +257,9 @@ CBUFFER_START(UnityPerMaterial)
         float4  _ShadowAOShift;
         float4  _ShadowAOShift2;
     #endif
+    #if defined(LIL_MULTI_INPUTS_RIMSHADE)
+        float4  _RimShadeColor;
+    #endif
     #if defined(LIL_MULTI_INPUTS_BACKLIGHT)
         float4  _BacklightColor;
         float4  _BacklightColorTex_ST;
@@ -370,6 +373,7 @@ CBUFFER_START(UnityPerMaterial)
     #if defined(LIL_FUR)
         float4  _FurNoiseMask_ST;
         float4  _FurVector;
+        float4  _FurRimColor;
     #endif
     #if defined(LIL_REFRACTION) || defined(LIL_GEM)
         float4  _RefractionColor;
@@ -436,6 +440,12 @@ CBUFFER_START(UnityPerMaterial)
         float   _Shadow3rdReceive;
         float   _ShadowFlatBlur;
         float   _ShadowFlatBorder;
+    #endif
+    #if defined(LIL_MULTI_INPUTS_RIMSHADE)
+        float _RimShadeNormalStrength;
+        float _RimShadeBorder;
+        float _RimShadeBlur;
+        float _RimShadeFresnelPower;
     #endif
     #if defined(LIL_MULTI_INPUTS_BACKLIGHT)
         float   _BacklightNormalStrength;
@@ -569,6 +579,35 @@ CBUFFER_START(UnityPerMaterial)
         float   _IDMask6;
         float   _IDMask7;
         float   _IDMask8;
+        float   _IDMaskPrior1;
+        float   _IDMaskPrior2;
+        float   _IDMaskPrior3;
+        float   _IDMaskPrior4;
+        float   _IDMaskPrior5;
+        float   _IDMaskPrior6;
+        float   _IDMaskPrior7;
+        float   _IDMaskPrior8;
+    #endif
+    #if defined(LIL_MULTI_INPUTS_UDIMDISCARD)
+        float _UDIMDiscardCompile;
+        float _UDIMDiscardMode;
+        float _UDIMDiscardUV;
+        float _UDIMDiscardRow3_0;
+        float _UDIMDiscardRow3_1;
+        float _UDIMDiscardRow3_2;
+        float _UDIMDiscardRow3_3;
+        float _UDIMDiscardRow2_0;
+        float _UDIMDiscardRow2_1;
+        float _UDIMDiscardRow2_2;
+        float _UDIMDiscardRow2_3;
+        float _UDIMDiscardRow1_0;
+        float _UDIMDiscardRow1_1;
+        float _UDIMDiscardRow1_2;
+        float _UDIMDiscardRow1_3;
+        float _UDIMDiscardRow0_0;
+        float _UDIMDiscardRow0_1;
+        float _UDIMDiscardRow0_2;
+        float _UDIMDiscardRow0_3;
     #endif
     float   _lilShadowCasterBias;
     #if defined(LIL_MULTI_INPUTS_OUTLINE)
@@ -587,6 +626,8 @@ CBUFFER_START(UnityPerMaterial)
         float   _FurRootOffset;
         float   _FurRandomize;
         float   _FurTouchStrength;
+        float   _FurRimFresnelPower;
+        float   _FurRimAntiLight;
     #endif
     #if defined(LIL_REFRACTION) || defined(LIL_GEM)
         float   _RefractionStrength;
@@ -614,6 +655,8 @@ CBUFFER_START(UnityPerMaterial)
         int     _IDMaskIndex7;
         int     _IDMaskIndex8;
         uint    _IDMaskFrom;
+        uint    _IDMaskIsBitmap;
+        uint    _IDMaskControlsDissolve;
     #endif
     uint    _Cull;
     #if defined(LIL_MULTI_INPUTS_OUTLINE)
@@ -812,6 +855,7 @@ TEXTURE2D(_ShadowStrengthMask);
 TEXTURE2D(_ShadowColorTex);
 TEXTURE2D(_Shadow2ndColorTex);
 TEXTURE2D(_Shadow3rdColorTex);
+TEXTURE2D(_RimShadeMask);
 TEXTURE2D(_BacklightColorTex);
 TEXTURE2D(_SmoothnessTex);
 TEXTURE2D(_MetallicGlossMap);
@@ -855,7 +899,7 @@ SAMPLER(sampler_AudioLinkMask);
 SAMPLER(sampler_OutlineTex);
 
 // AudioLink
-#if defined(LIL_FEATURE_AUDIOLINK)
+#if defined(LIL_FEATURE_AUDIOLINK) && !defined(AUDIOLINK_CGINC_INCLUDED)
 TEXTURE2D_FLOAT(_AudioTexture);
 float4 _AudioTexture_TexelSize;
 #endif

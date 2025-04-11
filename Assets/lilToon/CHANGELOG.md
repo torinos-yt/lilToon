@@ -4,6 +4,127 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-04-11
+### Added
+- Shadow SDF mode now uses the B channel as a blend with normal shadows and the A channel as the shadow strength
+
+### Changed
+- Significantly faster inspector
+- Distance clipping canceller is no longer applied in mirrors
+- Using AudioLink.cginc in a custom shader no longer causes an error
+
+### Fixed
+- Some textures remain after "Remove unused textures"
+- Shadows are displayed in areas hidden by stencils
+- FakeShadow's parallax in VR
+- An error occurs in FakeShadow when calling the material optimization method from an external tool
+- ChilloutVR build gives error when animation or material slot is empty
+
+## [1.8.5] - 2024-12-20
+### Changed
+- Reverted the unaffected parts of the 1.8.4 changes to verify bugs
+
+## [1.8.4] - 2024-12-12
+### Added
+- Shader optimization can now be skipped in NDMF's `Apply on Play`
+
+### Changed
+- Apply rim shade on fur
+
+### Fixed
+- Fur rim light calculations may be incorrect after optimization
+- UV Tile Discard not working properly
+- Attenuation of LTCGI
+- LTCGI does not work under certain conditions
+- Some modes of AudioLink do not work properly
+
+## [1.8.3] - 2024-10-16
+### Fixed
+- Error in some custom shaders
+
+## [1.8.2] - 2024-10-12
+### Fixed
+- Build fails only when used with VRChat World SDK
+
+## [1.8.1] - 2024-10-09
+### Fixed
+- SDF Face Shadow direction
+
+## [1.8.0] - 2024-10-09
+### Added
+- Property animations can now be taken into account when optimizing materials from external tools
+- SDF Face Shadow
+- LTCGI
+- Rim light for fur
+
+### Fixed
+- Fixed to search all scenes when building
+- UV Discard not working with ShadowCaster
+
+## [1.7.3] - 2024-04-08
+### Fixed
+- ShadowCaster disappears when the outline is deleted
+- Some textures are not deleted in `Remove Unused Texture`
+- Optimization breaks IDMaskPrior function
+- Shader error when set color to black
+- RimShade mask now working
+- Saving RimShade presets
+- Set keywords on build
+
+## [1.7.2] - 2024-01-18
+### Fixed
+- Toggle doesn't work well in Unity 2019
+
+## [1.7.1] - 2024-01-17
+### Fixed
+- UI Error
+
+## [1.7.0] - 2024-01-17
+### Added
+- UV Tile Discard feature
+
+### Fixed
+- Incorrect material versioning
+- Add shader code text asset to lilcontainer
+
+## [1.6.0] - 2023-12-31
+### Added
+- RimShade feature
+
+### Fixed
+- AssetPostprocessor not working properly
+- Avoid problems caused by incompatibility of shader keywords
+
+## [1.5.2] - 2023-12-30
+### Fixed
+- Fixed an issue where necessary vertex data might be deleted when building AssetBundle
+
+## [1.5.1] - 2023-12-27
+### Fixed
+- Avoid crashes in certain Unity versions
+- Support for material variants
+- Reduced the frequency of material migration
+
+## [1.5.0] - 2023-12-10
+### Added
+- Enabled to see property name with alt key
+- Mode that treats IDMask as bitmap and Dissolve support
+- `LILTOON_DISABLE_OPTIMIZATION` symbol that allows you to force disable optimization
+- `Assets/lilToon/[Material] Run migration`
+
+### Changed
+- Temporary files are no longer generated under the Temp folder
+
+### Fixed
+- Wrong label in transparent mode
+- MotionVector not being output correctly in URP
+- Avoid Unity removing too many UV channels
+- Problems when editing multiple materials
+- Baking color correction does not work correctly
+
+### Removed
+- Optimization by `IPreprocessShaders`
+
 ## [1.4.1] - 2023-09-04
 ### Fixed
 - `Fix Lighting` does not work properly when bones are missing
