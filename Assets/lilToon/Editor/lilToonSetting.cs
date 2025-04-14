@@ -757,6 +757,8 @@ public class lilToonSetting : ScriptableObject
                     if(!(c is Transform)) Add(c);
             }
             else if(next is not AnimationClip)
+            using(var so = new SerializedObject(next))
+            using(var prop = so.GetIterator())
             {
                 bool enterChildren = true;
                 while(prop.Next(enterChildren))
@@ -929,6 +931,7 @@ public class lilToonSetting : ScriptableObject
             Debug.LogException(e);
             Debug.Log("[lilToon] Optimization failed");
         }
+#endif
         #endif
     }
 

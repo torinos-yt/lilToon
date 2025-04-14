@@ -13,16 +13,8 @@ namespace lilToon
 {
     public static class lilStartup
     {
-        [MenuItem("Assets/lilToon/MigrateMaterials")]
-        public static async Task MigrateMaterialsfromMenu()
-        {
-            Debug.Log("Migrate lilToon Materials...");
-            await MigrateMaterials();
-            Debug.Log("Complete migrate lilToon Materials!");
-        }
-
         [InitializeOnLoadMethod]
-        public static async Task lilStartupMethod()
+        public static void lilStartupMethod()
         {
             //------------------------------------------------------------------------------------------------------------------------------
             // Variables
@@ -218,13 +210,19 @@ namespace lilToon
 
         internal static void MigrateMaterials()
         {
+            MigrateMaterialsAsync();
+        }
+
+        internal static async Task MigrateMaterialsAsync()
+        {
             EditorApplication.delayCall -= MigrateMaterials;
+            int count = 0;
             foreach(var material in lilDirectoryManager.FindAssets<Material>("t:material"))
             {
                 MigrateMaterial(material);
                 count++;
                 
-                if(count > 150)
+                if(count > 2500)
                 {
                     AssetDatabase.SaveAssets();
                     var handle = Resources.UnloadUnusedAssets();
@@ -243,7 +241,7 @@ namespace lilToon
         internal static void MigrateMaterial(Material material)
         {
             if(!lilMaterialUtils.CheckShaderIslilToon(material)) return;
-            var id = material.shader.GetPropertyNameId(material.shader.FindPropertyIndex("_lilToonVersion"));
+            var id = Shader.PropertyToID("_lilToonVersion");
             int version = 0;
             if(material.HasProperty(id)) version = (int)material.GetFloat(id);
             if(version >= lilConstants.currentVersionValue) return;

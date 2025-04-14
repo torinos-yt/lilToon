@@ -12,6 +12,7 @@ using System.Linq;
 using Object = UnityEngine.Object;
 using System.Text;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace lilToon
 {
@@ -93,9 +94,9 @@ namespace lilToon
         //------------------------------------------------------------------------------------------------------------------------------
         // Assets/lilToon/Run migration
         [MenuItem(menuPathRunMigration, false, menuPriorityRunMigration)]
-        private static void RunMigration()
+        private static async void RunMigration()
         {
-            lilStartup.MigrateMaterials();
+            await lilStartup.MigrateMaterialsAsync();
             EditorUtility.DisplayDialog("[lilToon] Run migration",GetLoc("sComplete"),GetLoc("sOK"));
         }
 
