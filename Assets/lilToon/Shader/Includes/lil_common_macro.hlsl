@@ -2220,6 +2220,7 @@ struct lilLightData
     // Realtime
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
         lc = input.lightColor; \
+        lc = LIL_MAINLIGHT_COLOR; \
         lilGetAdditionalLights(input.positionWS, input.positionCS, LIL_ADDITIONAL_LIGHT_STRENGTH, lc, ld); \
         LIL_CORRECT_LIGHTCOLOR_PS(lc); \
         LIL_CORRECT_LIGHTDIRECTION_PS(ld)
@@ -2227,11 +2228,13 @@ struct lilLightData
     // Realtime
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
         lc = input.lightColor; \
+        lc = LIL_MAINLIGHT_COLOR; \
         LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #else
     // Realtime
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
         lc = input.lightColor; \
+        lc = LIL_MAINLIGHT_COLOR; \
         LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #endif
 
