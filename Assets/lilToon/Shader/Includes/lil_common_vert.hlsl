@@ -95,6 +95,11 @@ LIL_V2F_TYPE vert(appdata input)
     float2 uvs[4] = {uvMain,input.uv1,input.uv2,input.uv3};
 
     //------------------------------------------------------------------------------------------------------------------------------
+    // Vertex Modification
+    #include "lil_vert_encryption.hlsl"
+    lilCustomVertexOS(input, uvMain, input.positionOS);
+
+    //------------------------------------------------------------------------------------------------------------------------------
     // Object space direction
     #if defined(LIL_APP_NORMAL) && defined(LIL_APP_TANGENT)
         float3 bitangentOS = normalize(cross(input.normalOS, input.tangentOS.xyz)) * (input.tangentOS.w * length(input.normalOS));
@@ -104,10 +109,6 @@ LIL_V2F_TYPE vert(appdata input)
         float3x3 tbnOS = 0.0;
     #endif
 
-    //------------------------------------------------------------------------------------------------------------------------------
-    // Vertex Modification
-    #include "lil_vert_encryption.hlsl"
-    lilCustomVertexOS(input, uvMain, input.positionOS);
     #include "lil_vert_audiolink.hlsl"
     #if !defined(LIL_ONEPASS_OUTLINE)
         #include "lil_vert_outline.hlsl"
@@ -125,7 +126,7 @@ LIL_V2F_TYPE vert(appdata input)
         // Vertex Modification
         #define LIL_MODIFY_PREVPOS
         #include "lil_vert_encryption.hlsl"
-        lilCustomVertexOS(input, uvMain, input.previousPositionOS);
+        lilCustomVertexOS(input, uvMain, input.previousPositionOS, input.normalOS);
         #include "lil_vert_audiolink.hlsl"
         #undef LIL_MODIFY_PREVPOS
 
